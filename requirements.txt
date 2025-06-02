@@ -1,0 +1,6 @@
+Django>=4.0
+djangorestframework
+djangorestframework-simplejwt
+drf_yasg
+psycopg2-binary
+django-cors-headers
