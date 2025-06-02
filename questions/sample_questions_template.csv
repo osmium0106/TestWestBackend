@@ -1,0 +1,3 @@
+text,subtopic_id,question_type,difficulty,extra_field1,extra_field2
+What is the capital of France?,1,mcq,easy,Geography,Europe
+Solve x+2=4,2,short,medium,Math,Algebra
