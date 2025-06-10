@@ -4,3 +4,5 @@ djangorestframework-simplejwt
 drf_yasg
 psycopg2-binary
 django-cors-headers
+openpyxl
+chardet

@@ -11,6 +11,7 @@ https://docs.djangoproject.com/en/5.2/ref/settings/
 """
 
 from pathlib import Path
+from datetime import timedelta
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
@@ -84,7 +85,7 @@ DATABASES = {
         'NAME': 'testwestdb',
         'USER': 'postgres',
         'PASSWORD': 'postgres',
-        'HOST': 'db',  # use 'localhost' if not using Docker
+        'HOST': 'db',  # use 'db' for Docker
         'PORT': '5432',
     }
 }
@@ -108,6 +109,7 @@ AUTH_PASSWORD_VALIDATORS = [
     },
 ]
 
+AUTH_USER_MODEL = 'user.CustomUser'
 
 # Internationalization
 # https://docs.djangoproject.com/en/5.2/topics/i18n/
@@ -124,7 +126,11 @@ USE_TZ = True
 # Static files (CSS, JavaScript, Images)
 # https://docs.djangoproject.com/en/5.2/howto/static-files/
 
-STATIC_URL = 'static/'
+STATIC_URL = '/static/'
+STATICFILES_DIRS = [
+    BASE_DIR / 'core' / 'static',
+]
+STATIC_ROOT = BASE_DIR / 'staticfiles'
 
 # Default primary key field type
 # https://docs.djangoproject.com/en/5.2/ref/settings/#default-auto-field
@@ -137,8 +143,24 @@ REST_FRAMEWORK = {
     ),
 }
 
+# Set JWT token lifetime to 1 day
+SIMPLE_JWT = {
+    'ACCESS_TOKEN_LIFETIME': timedelta(days=1),
+    'REFRESH_TOKEN_LIFETIME': timedelta(days=1),
+}
+
 CORS_ALLOWED_ORIGINS = [
     'http://localhost:5173',
 ]
 
 CORS_ALLOW_CREDENTIALS = True
+
+SWAGGER_SETTINGS = {
+    'DEFAULT_MODEL_RENDERING': 'example',
+    'USE_SESSION_AUTH': False,
+    'PERSIST_AUTH': True,
+    'STATIC_URL': '/static/',
+    'CUSTOM_JS': [
+        'swagger-token-persist.js',
+    ],
+}

@@ -1,3 +1,6 @@
-text,subtopic_id,question_type,difficulty,extra_field1,extra_field2
-What is the capital of France?,1,mcq,easy,Geography,Europe
-Solve x+2=4,2,short,medium,Math,Algebra
+text,subtopic_id,question_type,difficulty,option_a,option_b,option_c,option_d,correct_answer,explanation
+What is the capital of France?,1,mcq,easy,Paris,London,Berlin,Rome,a,Paris is the capital of France.
+Which of the following are prime numbers?,2,msq,medium,2,3,4,5,a,b,d,2, 3, and 5 are prime numbers.
+What is 2+2?,3,short,easy,,,,"The answer is 4."
+Describe the process of photosynthesis.,4,long,medium,,,,"Plants convert sunlight into energy."
+Solve x+2=4,2,short,medium,,,,"x = 2."

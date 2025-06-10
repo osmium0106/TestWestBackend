@@ -1,9 +1,20 @@
 {% extends "admin/base_site.html" %}
 {% block content %}
   <h1>Bulk Upload Questions</h1>
+  {{ helper_text|safe }}
   <form method="post" enctype="multipart/form-data">{% csrf_token %}
-    {{ form.as_p }}
+    {{ form.csv_file.label_tag }} {{ form.csv_file }}
     <input type="submit" value="Upload">
   </form>
-  <p>CSV columns required: text, subtopic_id, question_type, difficulty</p>
+  <p>Excel columns required:</p>
+  <ul>
+    <li><code>text</code> (required)</li>
+    <li><code>subtopic_name</code> (required)</li>
+    <li><code>question_type</code> (required: mcq, msq, short, long)</li>
+    <li><code>difficulty</code> (required: easy, medium, hard)</li>
+    <li><code>option_a</code>, <code>option_b</code>, <code>option_c</code>, <code>option_d</code> (required for MCQ/MSQ only, leave blank for short/long)</li>
+    <li><code>correct_answer</code> (required for MCQ/MSQ, single letter for MCQ, comma-separated for MSQ, leave blank for short/long)</li>
+    <li><code>explanation</code> (optional)</li>
+  </ul>
+  <p><strong>Note:</strong> For <code>short</code> and <code>long</code> question types, only <code>text</code>, <code>subtopic_name</code>, <code>question_type</code>, <code>difficulty</code>, <code>correct_answer</code>, and <code>explanation</code> are used. Options can be left blank.</p>
 {% endblock %}

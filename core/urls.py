@@ -16,6 +16,10 @@ Including another URLconf
 """
 from django.contrib import admin
 from django.urls import path, include
+from rest_framework_simplejwt.authentication import JWTAuthentication
+from rest_framework_simplejwt.tokens import UntypedToken
+from rest_framework_simplejwt.exceptions import InvalidToken, TokenError
+from rest_framework_simplejwt.settings import api_settings as jwt_settings
 from drf_yasg.views import get_schema_view
 from drf_yasg import openapi
 from rest_framework import permissions
@@ -28,7 +32,7 @@ schema_view = get_schema_view(
     ),
     public=True,
     permission_classes=(permissions.AllowAny,),
-    authentication_classes=[],
+    authentication_classes=[],  # Leave this empty to allow Swagger UI to persist the token
 )
 
 urlpatterns = [
