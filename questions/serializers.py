@@ -7,9 +7,26 @@ class GradeSerializer(serializers.ModelSerializer):
         fields = '__all__'
 
 class SubjectSerializer(serializers.ModelSerializer):
+    grade = serializers.CharField()
+
     class Meta:
         model = Subject
         fields = '__all__'
+
+    def to_internal_value(self, data):
+        ret = super().to_internal_value(data)
+        grade_name = ret.get('grade')
+        if grade_name:
+            try:
+                ret['grade'] = Grade.objects.get(name=grade_name)
+            except Grade.DoesNotExist:
+                raise serializers.ValidationError({'grade': f'Grade "{grade_name}" does not exist.'})
+        return ret
+
+    def to_representation(self, instance):
+        rep = super().to_representation(instance)
+        rep['grade'] = instance.grade.name if instance.grade else None
+        return rep
 
 class ChapterSerializer(serializers.ModelSerializer):
     class Meta:

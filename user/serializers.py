@@ -8,57 +8,61 @@ User = get_user_model()
 class RegisterSerializer(serializers.ModelSerializer):
     role = serializers.ChoiceField(choices=User.ROLE_CHOICES, default='user')
     password = serializers.CharField(write_only=True)
+    grade = serializers.CharField(required=False, allow_null=True)
 
     class Meta:
         model = User
-        fields = ('username', 'password', 'email', 'role')
+        fields = ('username', 'password', 'email', 'role', 'grade')
 
     def create(self, validated_data):
+        grade_name = validated_data.pop('grade', None)
         user = User.objects.create_user(
             username=validated_data['username'],
             email=validated_data.get('email', ''),
             password=validated_data['password'],
             role=validated_data.get('role', 'user')
         )
-        UserPreference.objects.create(user=user)
+        grade_obj = None
+        if grade_name:
+            # Try exact match first
+            grade_obj = Grade.objects.filter(name=grade_name).first()
+            # If not found and input is digit, try 'Grade X'
+            if not grade_obj and str(grade_name).isdigit():
+                grade_obj = Grade.objects.filter(name=f"Grade {grade_name}").first()
+        UserPreference.objects.create(user=user, grade=grade_obj)
         return user
 
+    def to_representation(self, instance):
+        rep = super().to_representation(instance)
+        # Add grade to the registration response if available
+        if hasattr(instance, 'preference') and instance.preference.grade:
+            rep['grade'] = instance.preference.grade.name
+        else:
+            rep['grade'] = None
+        return rep
+
 class UserPreferenceSerializer(serializers.ModelSerializer):
-    grade = serializers.CharField(required=False, allow_null=True, default="Grade 7")
     subjects = serializers.ListField(child=serializers.CharField(), required=False, default=["Maths"])
     chapters = serializers.ListField(child=serializers.CharField(), required=False, default=["Ch 1"])
     topics = serializers.ListField(child=serializers.CharField(), required=False, default=["Topic 1"])
+    subtopics = serializers.ListField(child=serializers.CharField(), required=False, default=["Subtopic 1"])
 
     class Meta:
         model = UserPreference
-        fields = ('grade', 'subjects', 'chapters', 'topics')
-
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
-        # Remove all .choices assignments, keep as plain CharField/ListField
-        # self.fields['grade'].choices = []
-        # self.fields['subjects'].choices = []
-        # self.fields['chapters'].choices = []
-        # self.fields['topics'].choices = []
+        fields = ('subjects', 'chapters', 'topics', 'subtopics')
 
     def to_internal_value(self, data):
         # Convert names to objects
         ret = super().to_internal_value(data)
-        # Grade
-        grade_name = ret.get('grade')
-        if grade_name:
-            try:
-                ret['grade'] = Grade.objects.get(name=grade_name)
-            except Grade.DoesNotExist:
-                raise serializers.ValidationError({'grade': f'Grade "{grade_name}" does not exist.'})
         # Subjects
         subject_names = ret.get('subjects', [])
         if subject_names:
             subjects = []
             for name in subject_names:
-                try:
-                    subjects.append(Subject.objects.get(name=name))
-                except Subject.DoesNotExist:
+                subject = Subject.objects.filter(name=name).first()
+                if subject:
+                    subjects.append(subject)
+                else:
                     raise serializers.ValidationError({'subjects': f'Subject "{name}" does not exist.'})
             ret['subjects'] = subjects
         # Chapters
@@ -66,9 +70,10 @@ class UserPreferenceSerializer(serializers.ModelSerializer):
         if chapter_names:
             chapters = []
             for name in chapter_names:
-                try:
-                    chapters.append(Chapter.objects.get(name=name))
-                except Chapter.DoesNotExist:
+                chapter = Chapter.objects.filter(name=name).first()
+                if chapter:
+                    chapters.append(chapter)
+                else:
                     raise serializers.ValidationError({'chapters': f'Chapter "{name}" does not exist.'})
             ret['chapters'] = chapters
         # Topics
@@ -76,18 +81,27 @@ class UserPreferenceSerializer(serializers.ModelSerializer):
         if topic_names:
             topics = []
             for name in topic_names:
-                try:
-                    topics.append(Topic.objects.get(name=name))
-                except Topic.DoesNotExist:
+                topic = Topic.objects.filter(name=name).first()
+                if topic:
+                    topics.append(topic)
+                else:
                     raise serializers.ValidationError({'topics': f'Topic "{name}" does not exist.'})
             ret['topics'] = topics
+        # Subtopics
+        subtopic_names = ret.get('subtopics', [])
+        if subtopic_names:
+            subtopics = []
+            for name in subtopic_names:
+                from questions.models import Subtopic
+                subtopic = Subtopic.objects.filter(name=name).first()
+                if subtopic:
+                    subtopics.append(subtopic)
+                else:
+                    raise serializers.ValidationError({'subtopics': f'Subtopic "{name}" does not exist.'})
+            ret['subtopics'] = subtopics
         return ret
 
     def update(self, instance, validated_data):
-        # Handle grade (FK)
-        grade = validated_data.pop('grade', None)
-        if grade is not None:
-            instance.grade = grade
         # Handle subjects (M2M)
         subjects = validated_data.pop('subjects', None)
         if subjects is not None:
@@ -118,17 +132,26 @@ class UserPreferenceSerializer(serializers.ModelSerializer):
             else:
                 topics = list(topics) if topics else []
             instance.topics.set(topics)
+        # Handle subtopics (M2M)
+        subtopics = validated_data.pop('subtopics', None)
+        if subtopics is not None:
+            if hasattr(subtopics, 'all'):
+                subtopics = list(subtopics.all())
+            elif isinstance(subtopics, (list, tuple, set)):
+                subtopics = list(subtopics)
+            else:
+                subtopics = list(subtopics) if subtopics else []
+            instance.subtopics.set(subtopics)
         instance.save()
         return instance
 
     def create(self, validated_data):
-        # Handle grade (FK)
-        grade = validated_data.pop('grade', None)
         # Handle M2M
         subjects = validated_data.pop('subjects', [])
         chapters = validated_data.pop('chapters', [])
         topics = validated_data.pop('topics', [])
-        instance = UserPreference.objects.create(grade=grade, **validated_data)
+        subtopics = validated_data.pop('subtopics', [])
+        instance = UserPreference.objects.create(**validated_data)
         if isinstance(subjects, list):
             instance.subjects.set(subjects)
         elif subjects is not None:
@@ -141,15 +164,19 @@ class UserPreferenceSerializer(serializers.ModelSerializer):
             instance.topics.set(topics)
         elif topics is not None:
             instance.topics.set(list(topics.all()))
+        if isinstance(subtopics, list):
+            instance.subtopics.set(subtopics)
+        elif subtopics is not None:
+            instance.subtopics.set(list(subtopics.all()))
         return instance
 
     def to_representation(self, instance):
         # Show names in output
         rep = {}
-        rep['grade'] = instance.grade.name if instance.grade else None
         rep['subjects'] = [s.name for s in instance.subjects.all()]
         rep['chapters'] = [c.name for c in instance.chapters.all()]
         rep['topics'] = [t.name for t in instance.topics.all()]
+        rep['subtopics'] = [st.name for st in instance.subtopics.all()]
         return rep
 
 class UserSerializer(serializers.ModelSerializer):

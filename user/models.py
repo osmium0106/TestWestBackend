@@ -15,6 +15,7 @@ class UserPreference(models.Model):
     subjects = models.ManyToManyField(Subject, blank=True)
     chapters = models.ManyToManyField(Chapter, blank=True)
     topics = models.ManyToManyField(Topic, blank=True)
+    subtopics = models.ManyToManyField('questions.Subtopic', blank=True)
 
     def __str__(self):
         return f"Preferences for {self.user.username}"

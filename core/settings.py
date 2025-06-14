@@ -42,6 +42,7 @@ INSTALLED_APPS = [
     'drf_yasg',
     'user',
     'questions',
+    'paper',
     'corsheaders',
 ]
 
@@ -82,7 +83,7 @@ WSGI_APPLICATION = 'core.wsgi.application'
 DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.postgresql',
-        'NAME': 'testwestdb',
+        'NAME': 'db-1',  # fixed: removed space, must match created DB
         'USER': 'postgres',
         'PASSWORD': 'postgres',
         'HOST': 'db',  # use 'db' for Docker

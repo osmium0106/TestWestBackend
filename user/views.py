@@ -13,6 +13,7 @@ from .serializers import RegisterSerializer, UserPreferenceSerializer, UserSeria
 from .models import UserPreference
 from django.contrib.auth import get_user_model
 from rest_framework.generics import RetrieveUpdateAPIView
+from rest_framework.permissions import IsAuthenticated
 
 User = get_user_model()
 
@@ -34,6 +35,7 @@ class LoginAPIView(APIView):
                     "application/json": {
                         "refresh": "<refresh_token>",
                         "access": "<access_token>",
+                        "grade": "1",
                         "message": "Login successful"
                     }
                 }
@@ -46,13 +48,29 @@ class LoginAPIView(APIView):
         if serializer.is_valid():
             username = serializer.validated_data['username']
             password = serializer.validated_data['password']
+            grade_name = serializer.validated_data.get('grade')
             user = authenticate(username=username, password=password)
             if user is not None:
+                # If grade is passed in login, update preference
+                if grade_name:
+                    from questions.models import Grade
+                    try:
+                        grade_obj = Grade.objects.get(name=grade_name)
+                        if hasattr(user, 'preference'):
+                            user.preference.grade = grade_obj
+                            user.preference.save()
+                    except Grade.DoesNotExist:
+                        pass
                 refresh = RefreshToken.for_user(user)
                 access_token = str(refresh.access_token)
+                # Get grade name if available
+                grade = None
+                if hasattr(user, 'preference') and user.preference.grade:
+                    grade = user.preference.grade.name
                 response = Response({
                     'refresh': str(refresh),
                     'access': access_token,
+                    'grade': grade,
                     'message': 'Login successful'
                 }, status=status.HTTP_200_OK)
                 response['Authorization'] = f'Bearer {access_token}'
@@ -181,4 +199,98 @@ class UserListWithPreferencesAPIView(APIView):
     def get(self, request):
         users = User.objects.all()
         data = UserSerializer(users, many=True).data
+        return Response(data)
+
+class UserGradeUpdateSerializer(serializers.Serializer):
+    grade = serializers.CharField(help_text="Grade name, e.g. 'Grade 7'")
+
+class UserGradeUpdateAPIView(APIView):
+    permission_classes = [IsAuthenticated]
+    @swagger_auto_schema(
+        request_body=UserGradeUpdateSerializer,
+        responses={
+            200: openapi.Response(
+                description="Grade updated successfully.",
+                examples={
+                    "application/json": {
+                        "grade": "Grade 7",
+                        "message": "Grade updated successfully"
+                    }
+                }
+            ),
+            400: "Bad request (missing or invalid grade)",
+            404: "User preference not found"
+        },
+        operation_description="Set or update the user's grade. Auth required."
+    )
+    def post(self, request):
+        grade_name = request.data.get('grade')
+        if not grade_name:
+            return Response({'error': 'grade is required'}, status=status.HTTP_400_BAD_REQUEST)
+        from questions.models import Grade
+        try:
+            grade_obj = Grade.objects.get(name=grade_name)
+        except Grade.DoesNotExist:
+            return Response({'error': f'Grade "{grade_name}" does not exist.'}, status=status.HTTP_400_BAD_REQUEST)
+        if hasattr(request.user, 'preference'):
+            request.user.preference.grade = grade_obj
+            request.user.preference.save()
+            return Response({'grade': grade_obj.name, 'message': 'Grade updated successfully'})
+        else:
+            return Response({'error': 'User preference not found.'}, status=status.HTTP_404_NOT_FOUND)
+
+class GradeHierarchyAPIView(APIView):
+    permission_classes = [IsAuthenticated]
+    @swagger_auto_schema(
+        responses={
+            200: openapi.Response(
+                description="Nested subjects, chapters, topics, and subtopics for the user's grade.",
+                examples={
+                    "application/json": {
+                        "grade": "Grade 7",
+                        "subjects": [
+                            {
+                                "name": "Maths",
+                                "chapters": [
+                                    {
+                                        "name": "Ch 1",
+                                        "topics": [
+                                            {
+                                                "name": "Topic 1",
+                                                "subtopics": [
+                                                    {"name": "Subtopic 1"}
+                                                ]
+                                            }
+                                        ]
+                                    }
+                                ]
+                            }
+                        ]
+                    }
+                }
+            ),
+            404: "No grade set for user or not found."
+        },
+        operation_description="Get all subjects, chapters, topics, and subtopics for the logged-in user's grade."
+    )
+    def get(self, request):
+        user = request.user
+        if not hasattr(user, 'preference') or not user.preference.grade:
+            return Response({'error': 'No grade set for user.'}, status=404)
+        grade = user.preference.grade
+        data = {
+            'grade': grade.name,
+            'subjects': []
+        }
+        for subject in grade.subjects.all():
+            subj_data = {'name': subject.name, 'chapters': []}
+            for chapter in subject.chapters.all():
+                chap_data = {'name': chapter.name, 'topics': []}
+                for topic in chapter.topics.all():
+                    topic_data = {'name': topic.name, 'subtopics': []}
+                    for subtopic in topic.subtopics.all():
+                        topic_data['subtopics'].append({'name': subtopic.name})
+                    chap_data['topics'].append(topic_data)
+                subj_data['chapters'].append(chap_data)
+            data['subjects'].append(subj_data)
         return Response(data)

@@ -6,7 +6,6 @@ from .serializers import (
     GradeSerializer, SubjectSerializer, ChapterSerializer, TopicSerializer, SubtopicSerializer, QuestionSerializer
 )
 from django.db import transaction
-from django.db.models import Q
 from drf_yasg import openapi
 from drf_yasg.utils import swagger_auto_schema
 
@@ -38,14 +37,6 @@ class GradeViewSet(viewsets.ModelViewSet):
     def destroy(self, request, *args, **kwargs):
         return super().destroy(request, *args, **kwargs)
 
-    def get_queryset(self):
-        user = self.request.user
-        if user.is_authenticated and hasattr(user, 'preference') and user.role == 'user':
-            pref = user.preference
-            if pref.grade:
-                return Grade.objects.filter(id=pref.grade.id)
-        return super().get_queryset()
-
 class SubjectViewSet(viewsets.ModelViewSet):
     queryset = Subject.objects.all()
     serializer_class = SubjectSerializer
@@ -73,16 +64,6 @@ class SubjectViewSet(viewsets.ModelViewSet):
     @swagger_auto_schema(tags=["Subjects"])
     def destroy(self, request, *args, **kwargs):
         return super().destroy(request, *args, **kwargs)
-
-    def get_queryset(self):
-        user = self.request.user
-        if user.is_authenticated and hasattr(user, 'preference') and user.role == 'user':
-            pref = user.preference
-            if pref.subjects.exists():
-                return Subject.objects.filter(id__in=pref.subjects.values_list('id', flat=True))
-            elif pref.grade:
-                return Subject.objects.filter(grade=pref.grade)
-        return super().get_queryset()
 
 class ChapterViewSet(viewsets.ModelViewSet):
     queryset = Chapter.objects.all()
@@ -112,18 +93,6 @@ class ChapterViewSet(viewsets.ModelViewSet):
     def destroy(self, request, *args, **kwargs):
         return super().destroy(request, *args, **kwargs)
 
-    def get_queryset(self):
-        user = self.request.user
-        if user.is_authenticated and hasattr(user, 'preference') and user.role == 'user':
-            pref = user.preference
-            if pref.chapters.exists():
-                return Chapter.objects.filter(id__in=pref.chapters.values_list('id', flat=True))
-            elif pref.subjects.exists():
-                return Chapter.objects.filter(subject__in=pref.subjects.all())
-            elif pref.grade:
-                return Chapter.objects.filter(subject__grade=pref.grade)
-        return super().get_queryset()
-
 class TopicViewSet(viewsets.ModelViewSet):
     queryset = Topic.objects.all()
     serializer_class = TopicSerializer
@@ -152,20 +121,6 @@ class TopicViewSet(viewsets.ModelViewSet):
     def destroy(self, request, *args, **kwargs):
         return super().destroy(request, *args, **kwargs)
 
-    def get_queryset(self):
-        user = self.request.user
-        if user.is_authenticated and hasattr(user, 'preference') and user.role == 'user':
-            pref = user.preference
-            if pref.topics.exists():
-                return Topic.objects.filter(id__in=pref.topics.values_list('id', flat=True))
-            elif pref.chapters.exists():
-                return Topic.objects.filter(chapter__in=pref.chapters.all())
-            elif pref.subjects.exists():
-                return Topic.objects.filter(chapter__subject__in=pref.subjects.all())
-            elif pref.grade:
-                return Topic.objects.filter(chapter__subject__grade=pref.grade)
-        return super().get_queryset()
-
 class SubtopicViewSet(viewsets.ModelViewSet):
     queryset = Subtopic.objects.all()
     serializer_class = SubtopicSerializer
@@ -193,20 +148,6 @@ class SubtopicViewSet(viewsets.ModelViewSet):
     @swagger_auto_schema(tags=["Subtopics"])
     def destroy(self, request, *args, **kwargs):
         return super().destroy(request, *args, **kwargs)
-
-    def get_queryset(self):
-        user = self.request.user
-        if user.is_authenticated and hasattr(user, 'preference') and user.role == 'user':
-            pref = user.preference
-            if pref.topics.exists():
-                return Subtopic.objects.filter(topic__in=pref.topics.all())
-            elif pref.chapters.exists():
-                return Subtopic.objects.filter(topic__chapter__in=pref.chapters.all())
-            elif pref.subjects.exists():
-                return Subtopic.objects.filter(topic__chapter__subject__in=pref.subjects.all())
-            elif pref.grade:
-                return Subtopic.objects.filter(topic__chapter__subject__grade=pref.grade)
-        return super().get_queryset()
 
 class QuestionViewSet(viewsets.ModelViewSet):
     queryset = Question.objects.all()
@@ -249,42 +190,3 @@ class QuestionViewSet(viewsets.ModelViewSet):
                 serializer.save()
             return Response(serializer.data, status=status.HTTP_201_CREATED)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
-
-    def get_queryset(self):
-        user = self.request.user
-        queryset = super().get_queryset()
-        if user.is_authenticated and hasattr(user, 'preference') and user.role == 'user':
-            pref = user.preference
-            if pref.topics.exists():
-                queryset = queryset.filter(subtopic__topic__in=pref.topics.all())
-            elif pref.chapters.exists():
-                queryset = queryset.filter(subtopic__topic__chapter__in=pref.chapters.all())
-            elif pref.subjects.exists():
-                queryset = queryset.filter(subtopic__topic__chapter__subject__in=pref.subjects.all())
-            elif pref.grade:
-                queryset = queryset.filter(subtopic__topic__chapter__subject__grade=pref.grade)
-        question_type = self.request.query_params.get('question_type')
-        difficulty = self.request.query_params.get('difficulty')
-        search = self.request.query_params.get('search')
-        grade = self.request.query_params.get('grade')
-        subject = self.request.query_params.get('subject')
-        chapter = self.request.query_params.get('chapter')
-        topic = self.request.query_params.get('topic')
-        subtopic = self.request.query_params.get('subtopic')
-        if question_type:
-            queryset = queryset.filter(question_type=question_type)
-        if difficulty:
-            queryset = queryset.filter(difficulty=difficulty)
-        if search:
-            queryset = queryset.filter(Q(text__icontains=search))
-        if grade:
-            queryset = queryset.filter(subtopic__topic__chapter__subject__grade__id=grade)
-        if subject:
-            queryset = queryset.filter(subtopic__topic__chapter__subject__id=subject)
-        if chapter:
-            queryset = queryset.filter(subtopic__topic__chapter__id=chapter)
-        if topic:
-            queryset = queryset.filter(subtopic__topic__id=topic)
-        if subtopic:
-            queryset = queryset.filter(subtopic__id=subtopic)
-        return queryset
