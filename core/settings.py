@@ -83,7 +83,7 @@ WSGI_APPLICATION = 'core.wsgi.application'
 DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.postgresql',
-        'NAME': 'db-1',  # fixed: removed space, must match created DB
+        'NAME': 'testwestdb',  # must match POSTGRES_DB in docker-compose.yml
         'USER': 'postgres',
         'PASSWORD': 'postgres',
         'HOST': 'db',  # use 'db' for Docker
