@@ -1,5 +1,6 @@
 from rest_framework import serializers
 from questions.models import Question
+from .models import GeneratedPaper
 
 class PaperGenerateSerializer(serializers.Serializer):
     mode = serializers.ChoiceField(choices=[('subject', 'Subject'), ('chapter', 'Chapter'), ('topic', 'Topic'), ('subtopic', 'Subtopic')])
@@ -21,3 +22,26 @@ class PaperGenerateSerializer(serializers.Serializer):
         if value_lower not in valid_diffs:
             raise serializers.ValidationError(f"Invalid difficulty. Valid options: {valid_diffs}")
         return value_lower
+
+class GeneratedPaperSerializer(serializers.ModelSerializer):
+    questions = serializers.SerializerMethodField()
+
+    class Meta:
+        model = GeneratedPaper
+        fields = ['id', 'title', 'created_at', 'questions']
+
+    def get_questions(self, obj):
+        return [
+            {
+                'id': q.id,
+                'text': q.text,
+                'question_type': q.question_type,
+                'difficulty': q.difficulty,
+                'option_a': q.option_a,
+                'option_b': q.option_b,
+                'option_c': q.option_c,
+                'option_d': q.option_d,
+                'correct_answer': q.correct_answer,
+                'explanation': q.explanation
+            } for q in obj.questions.all()
+        ]

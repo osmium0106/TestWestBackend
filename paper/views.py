@@ -4,8 +4,11 @@ from rest_framework.response import Response
 from rest_framework import status
 from drf_yasg.utils import swagger_auto_schema
 from drf_yasg import openapi
-from .serializers import PaperGenerateSerializer
+from .serializers import PaperGenerateSerializer, GeneratedPaperSerializer
 from questions.models import Subject, Chapter, Topic, Subtopic, Question
+from .models import GeneratedPaper
+from rest_framework.permissions import IsAuthenticated
+from rest_framework import generics
 import random
 
 # Create your views here.
@@ -81,4 +84,16 @@ class PaperGenerateAPIView(APIView):
                 'explanation': q.explanation
             } for q in questions
         ]
+        # Save generated paper for user if authenticated
+        if request.user.is_authenticated:
+            paper = GeneratedPaper.objects.create(user=request.user)
+            paper.questions.set([q.id for q in questions])
+            paper.save()
         return Response({'questions': result})
+
+class UserGeneratedPaperListAPIView(generics.ListAPIView):
+    serializer_class = GeneratedPaperSerializer
+    permission_classes = [IsAuthenticated]
+
+    def get_queryset(self):
+        return GeneratedPaper.objects.filter(user=self.request.user).order_by('-created_at')
