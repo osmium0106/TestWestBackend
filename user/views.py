@@ -294,3 +294,31 @@ class GradeHierarchyAPIView(APIView):
                 subj_data['chapters'].append(chap_data)
             data['subjects'].append(subj_data)
         return Response(data)
+
+class AddUserAPIView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    @swagger_auto_schema(
+        request_body=RegisterSerializer,
+        operation_description="School admin adds a user (role 'user'). Enforces max_sub_users and sets parent.",
+        tags=["User"],
+        responses={201: UserSerializer, 400: "Limit reached or invalid data", 403: "Not allowed"}
+    )
+    def post(self, request):
+        admin = request.user
+        if admin.role != 'school_admin':
+            return Response({'error': 'Only school admins can add users.'}, status=403)
+        # Count current sub-users
+        current_count = admin.sub_users.count()
+        if admin.max_sub_users and current_count >= admin.max_sub_users:
+            return Response({'error': f'Max sub-users limit ({admin.max_sub_users}) reached.'}, status=400)
+        data = request.data.copy()
+        data['role'] = 'user'  # Force role to 'user'
+        serializer = RegisterSerializer(data=data)
+        if serializer.is_valid():
+            user = serializer.save()
+            user.parent = admin
+            user.role = 'user'
+            user.save()
+            return Response(UserSerializer(user).data, status=201)
+        return Response(serializer.errors, status=400)

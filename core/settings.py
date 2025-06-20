@@ -44,6 +44,7 @@ INSTALLED_APPS = [
     'questions',
     'paper',
     'corsheaders',
+    'frontend',
 ]
 
 MIDDLEWARE = [
@@ -86,7 +87,7 @@ DATABASES = {
         'NAME': 'testwestdb',  # must match POSTGRES_DB in docker-compose.yml
         'USER': 'postgres',
         'PASSWORD': 'postgres',
-        'HOST': 'db',  # use 'db' for Docker
+        'HOST': 'db',  # must match the service name in docker-compose.yml
         'PORT': '5432',
     }
 }
@@ -165,3 +166,5 @@ SWAGGER_SETTINGS = {
         'swagger-token-persist.js',
     ],
 }
+
+LOGIN_REDIRECT_URL = '/frontend/dashboard/'

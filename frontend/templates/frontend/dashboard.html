@@ -1,0 +1,56 @@
+{% extends 'base.html' %}
+{% block title %}User Dashboard{% endblock %}
+{% block content %}
+<div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
+  <h1 class="h2">Welcome, {{ user.username }}!</h1>
+</div>
+<div class="row">
+  <div class="col-md-4">
+    <div class="card mb-3">
+      <div class="card-header">Login Activity</div>
+      <div class="card-body">
+        <p class="card-text">Recent logins and activity will appear here.</p>
+        <span class="badge bg-info">Coming Soon</span>
+      </div>
+    </div>
+  </div>
+  <div class="col-md-4">
+    <div class="card mb-3">
+      <div class="card-header">Time Spent</div>
+      <div class="card-body">
+        <p class="card-text">Track your time spent on the platform.</p>
+        <span class="badge bg-info">Coming Soon</span>
+      </div>
+    </div>
+  </div>
+  <div class="col-md-4">
+    <div class="card mb-3">
+      <div class="card-header">Question Paper Count</div>
+      <div class="card-body">
+        <p class="card-text">Number of question papers generated: <strong>0</strong></p>
+        <span class="badge bg-info">Coming Soon</span>
+      </div>
+    </div>
+  </div>
+</div>
+<div class="row">
+  <div class="col-md-6">
+    <div class="card mb-3">
+      <div class="card-header">Generate Question Papers</div>
+      <div class="card-body">
+        <p class="card-text">Start generating question papers here.</p>
+        <a href="#" class="btn btn-primary disabled">Coming Soon</a>
+      </div>
+    </div>
+  </div>
+  <div class="col-md-6">
+    <div class="card mb-3">
+      <div class="card-header">My Papers</div>
+      <div class="card-body">
+        <p class="card-text">View and manage your generated papers.</p>
+        <a href="#" class="btn btn-primary disabled">Coming Soon</a>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

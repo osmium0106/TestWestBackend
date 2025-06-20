@@ -4,10 +4,14 @@ from questions.models import Grade, Subject, Chapter, Topic
 
 class CustomUser(AbstractUser):
     ROLE_CHOICES = (
+        ('superadmin', 'Super Admin'),
+        ('school_admin', 'School Admin'),
         ('user', 'User'),
-        ('admin', 'Admin'),
     )
-    role = models.CharField(max_length=10, choices=ROLE_CHOICES, default='user')
+    role = models.CharField(max_length=20, choices=ROLE_CHOICES, default='user')
+    parent = models.ForeignKey('self', null=True, blank=True, on_delete=models.SET_NULL, related_name='sub_users')
+    max_sub_users = models.PositiveIntegerField(default=0, help_text='Max users this admin can create (school_admin only)')
+    max_question_papers = models.PositiveIntegerField(default=10, help_text='Max question papers this user can generate')
 
 class UserPreference(models.Model):
     user = models.OneToOneField(CustomUser, on_delete=models.CASCADE, related_name='preference')

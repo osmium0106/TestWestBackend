@@ -1,0 +1,39 @@
+{% extends 'base.html' %}
+{% block content %}
+<div class="container mt-4">
+  <h2>Super Admin Dashboard</h2>
+  <form method="post" action="/frontend/superadmin-dashboard/">
+    {% csrf_token %}
+    <div class="mb-3">
+      <label for="school_name" class="form-label">School Name</label>
+      <input type="text" class="form-control" id="school_name" name="school_name" required>
+    </div>
+    <div class="mb-3">
+      <label for="max_users" class="form-label">Max Users</label>
+      <input type="number" class="form-control" id="max_users" name="max_users" min="1" required>
+    </div>
+    <div class="mb-3">
+      <label for="admin_username" class="form-label">School Admin Username</label>
+      <input type="text" class="form-control" id="admin_username" name="admin_username" required>
+    </div>
+    <div class="mb-3">
+      <label for="admin_email" class="form-label">School Admin Email</label>
+      <input type="email" class="form-control" id="admin_email" name="admin_email" required>
+    </div>
+    <div class="mb-3">
+      <label for="admin_password" class="form-label">School Admin Password</label>
+      <input type="password" class="form-control" id="admin_password" name="admin_password" required>
+    </div>
+    <button type="submit" class="btn btn-primary">Create School & Admin</button>
+  </form>
+  <hr>
+  <h4>Existing Schools</h4>
+  <ul>
+    {% for school in schools %}
+      <li>{{ school.school_name }} (Admin: {{ school.admin.username }}, Max Users: {{ school.max_sub_users }})</li>
+    {% empty %}
+      <li>No schools created yet.</li>
+    {% endfor %}
+  </ul>
+</div>
+{% endblock %}
