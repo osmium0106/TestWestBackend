@@ -168,6 +168,7 @@ SWAGGER_SETTINGS = {
 }
 
 LOGIN_REDIRECT_URL = '/frontend/dashboard/'
+LOGIN_URL = '/frontend/login/'
 
 CSRF_TRUSTED_ORIGINS = ['https://testwest.live', 'https://www.testwest.live']
 CSRF_COOKIE_SECURE = True
