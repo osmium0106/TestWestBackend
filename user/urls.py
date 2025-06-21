@@ -1,6 +1,6 @@
 from rest_framework_simplejwt.views import TokenObtainPairView, TokenRefreshView
 from django.urls import path
-from .views import LoginAPIView, RegisterAPIView, UserPreferenceAPIView, UserMeAPIView, UserPreferenceDetailAPIView, UserListWithPreferencesAPIView, UserGradeUpdateAPIView, GradeHierarchyAPIView, AddUserAPIView
+from .views import LoginAPIView, RegisterAPIView, UserPreferenceAPIView, UserMeAPIView, UserPreferenceDetailAPIView, UserListWithPreferencesAPIView, UserGradeUpdateAPIView, GradeHierarchyAPIView, AddUserAPIView, SuperAdminListCreateAPIView, SchoolAdminListCreateAPIView
 
 urlpatterns = [
     path('login/', LoginAPIView.as_view(), name='login'),
@@ -14,4 +14,6 @@ urlpatterns = [
     path('grade/', UserGradeUpdateAPIView.as_view(), name='user_grade_update'),
     path('grade-hierarchy/', GradeHierarchyAPIView.as_view(), name='user_grade_hierarchy'),
     path('add-user/', AddUserAPIView.as_view(), name='add_user'),
+    path('superadmins/', SuperAdminListCreateAPIView.as_view(), name='superadmin-list-create'),
+    path('school-admins/', SchoolAdminListCreateAPIView.as_view(), name='schooladmin-list-create'),
 ]

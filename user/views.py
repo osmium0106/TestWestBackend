@@ -9,8 +9,8 @@ from rest_framework_simplejwt.tokens import RefreshToken
 from rest_framework_simplejwt.authentication import JWTAuthentication
 from drf_yasg import openapi
 from rest_framework import generics, permissions
-from .serializers import RegisterSerializer, UserPreferenceSerializer, UserSerializer
-from .models import UserPreference
+from .serializers import RegisterSerializer, UserPreferenceSerializer, UserSerializer, UserRoleSerializer
+from .models import UserPreference, CustomUser
 from django.contrib.auth import get_user_model
 from rest_framework.generics import RetrieveUpdateAPIView
 from rest_framework.permissions import IsAuthenticated
@@ -322,3 +322,41 @@ class AddUserAPIView(APIView):
             user.save()
             return Response(UserSerializer(user).data, status=201)
         return Response(serializer.errors, status=400)
+
+class SuperAdminListCreateAPIView(generics.ListCreateAPIView):
+    queryset = CustomUser.objects.filter(role='superadmin')
+    serializer_class = UserRoleSerializer
+    permission_classes = [permissions.IsAdminUser]
+
+    @swagger_auto_schema(
+        operation_description="Get all superadmins or create a new superadmin.",
+        tags=["SuperAdmin"]
+    )
+    def get(self, request, *args, **kwargs):
+        return super().get(request, *args, **kwargs)
+
+    @swagger_auto_schema(
+        operation_description="Create a new superadmin.",
+        tags=["SuperAdmin"]
+    )
+    def post(self, request, *args, **kwargs):
+        return super().post(request, *args, **kwargs)
+
+class SchoolAdminListCreateAPIView(generics.ListCreateAPIView):
+    queryset = CustomUser.objects.filter(role='school_admin')
+    serializer_class = UserRoleSerializer
+    permission_classes = [permissions.IsAdminUser]
+
+    @swagger_auto_schema(
+        operation_description="Get all school admins or create a new school admin.",
+        tags=["SchoolAdmin"]
+    )
+    def get(self, request, *args, **kwargs):
+        return super().get(request, *args, **kwargs)
+
+    @swagger_auto_schema(
+        operation_description="Create a new school admin.",
+        tags=["SchoolAdmin"]
+    )
+    def post(self, request, *args, **kwargs):
+        return super().post(request, *args, **kwargs)
