@@ -26,7 +26,7 @@ SECRET_KEY = 'django-insecure-3!nkf1j$ctj3kw@bk)n117d6)4-yj)d1#%%v4hx&g@4ht-m5d@
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = ['testwest.live', 'www.testwest.live', '13.60.81.50']
+ALLOWED_HOSTS = ['testwest.live', 'www.testwest.live', '13.60.81.50', 'localhost', '127.0.0.1']
 
 
 # Application definition
@@ -170,6 +170,11 @@ SWAGGER_SETTINGS = {
 LOGIN_REDIRECT_URL = '/frontend/dashboard/'
 LOGIN_URL = '/frontend/login/'
 
-CSRF_TRUSTED_ORIGINS = ['https://testwest.live', 'https://www.testwest.live']
+CSRF_TRUSTED_ORIGINS = [
+    'https://testwest.live',
+    'https://www.testwest.live',
+    'http://localhost:8000',
+    'http://127.0.0.1:8000',
+]
 CSRF_COOKIE_SECURE = True
 SESSION_COOKIE_SECURE = True

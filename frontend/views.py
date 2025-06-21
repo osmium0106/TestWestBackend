@@ -75,6 +75,7 @@ def custom_login(request):
             user = authenticate(request, username=username, password=password)
             if user is not None:
                 login(request, user)
+                print(f"User {user.username} authenticated, role: {user.role}")  # Debug print
                 if user.role == 'superadmin':
                     return redirect('superadmin_dashboard')
                 elif user.role == 'school_admin':
@@ -82,6 +83,7 @@ def custom_login(request):
                 else:
                     return redirect('dashboard')
             else:
+                print("Invalid credentials")  # Debug print
                 return render(request, 'frontend/login.html', {'form': form, 'error': 'Invalid credentials'})
     else:
         form = CustomLoginForm()

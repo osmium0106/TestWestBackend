@@ -1,7 +1,12 @@
-
 {% block content %}
 <div class="container" style="max-width:400px;margin-top:60px;">
   <h2 class="mb-4">Login</h2>
+  {% if error %}
+    <div class="alert alert-danger">{{ error }}</div>
+  {% endif %}
+  {% if form.errors %}
+    <div class="alert alert-warning">{{ form.errors }}</div>
+  {% endif %}
   <form method="post">
     {% csrf_token %}
     {{ form.as_p }}
